@@ -5,17 +5,24 @@
   text-align: center;
 }
 
+.header {
+  transition: transform 0.2s ease;
+}
+
+.header h1 {
+  font-family: 'Tektur', sans-serif;
+  font-size: extralarge;
+}
+
+
 .logo {
-  height: 10em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+  height: 8em;
+  padding: 1.5em 0.5em;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+
+.header:hover, .header:focus {
+  color: inherit;
+  transform: scale(1.02); /* Increase the size by 5% */
 }
 
 @keyframes logo-spin {
