@@ -12,9 +12,20 @@ export default defineConfig({
       usePolling: true,
     },
     proxy: {
-      "/shorten": {
+      "/app/create": {
         target: "https://api.urlup.org/",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/app\//, ""),
+      },
+      "/app/get": {
+        target: "https://api.urlup.org/",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/app\//, ""),
+      },
+      "/app/redirect": {
+        target: "https://api.urlup.org/",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/app\//, ""),
       },
     },
   },

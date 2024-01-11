@@ -22,7 +22,10 @@ function Home() {
     setIsLoading(true);
     try {
       const response = await createUrl(url);
-      navigate("/short", { state: { shortUrl: response } });
+      const queryParams = new URLSearchParams({
+        s: response.short,
+      }).toString();
+      navigate(`/app/short?${queryParams}`, { state: { shortUrl: response } });
     } finally {
       setIsLoading(false);
     }

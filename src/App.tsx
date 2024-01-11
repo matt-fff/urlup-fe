@@ -5,6 +5,7 @@ import "./App.css";
 import Home from "./pages/Home";
 import Short from "./pages/Short";
 import Header from "./Header";
+import Redirect from "./pages/Redirect";
 
 function App() {
   return (
@@ -13,7 +14,8 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/short" element={<Short />} />
+          <Route path="/app/short" element={<Short />} />
+          <Route path="/:shortcode" element={<Redirect />} />
         </Routes>
       </VStack>
     </Router>

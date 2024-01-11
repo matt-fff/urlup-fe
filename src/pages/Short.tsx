@@ -36,41 +36,46 @@ const ScrollableTd = (props) => (
 async function copyToClipboard(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    console.log("Text copied to clipboard");
   } catch (err) {
     console.error("Failed to copy: ", err);
   }
 }
 
 function Short() {
-  let {
-    state: { shortUrl = null },
-  } = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [row, setRow] = useState({
-    url: "",
-    clicks: 0,
-    short: "",
-    date: "",
-  });
-  //const shortened: ShortUrl = {
-  //  url: "https://leetcode.com/problems/clone-graph/description/very/very/very/very/very/very/very",
-  //  short: "https://urlup.org/akhfdahui",
-  //  clicks: 82,
-  //  createdAt: new Date(),
-  //};
+  const location = useLocation();
+  const cachedRow = location?.state?.cachedRow;
+  const [row, setRow] = useState(
+    cachedRow ?? {
+      url: "",
+      clicks: 0,
+      short: "",
+      date: "",
+    }
+  );
 
-  if (shortUrl == null) {
-    setIsLoading(true);
-  } else {
-    setRow(shortUrl);
-  }
+  const [isLoading, setIsLoading] = useState(!cachedRow);
+
+  const searchParams = new URLSearchParams(location.search);
+  const shortcode = searchParams.get("s") ?? row.short;
+
+  const host = window.location.host;
+  const shortUrl = `${host}/${row.short}`;
 
   useEffect(() => {
     if (!isLoading) {
       return;
     }
-  }, [isLoading, row]);
+
+    const fetchData = async (shortcode: string) => {
+      const url = await getUrl(shortcode);
+      setRow(url);
+    };
+
+    if (shortcode) {
+      fetchData(shortcode);
+    }
+    setIsLoading(false);
+  }, [isLoading, row, shortcode]);
 
   return (
     <Center>
@@ -79,15 +84,15 @@ function Short() {
           <InputGroup size="md">
             <Input
               pr="12rem"
-              placeholder="Your shorturl here"
-              value={shortUrl.short}
+              placeholder="Your short url here"
+              value={shortUrl}
             />
             <InputRightElement width="6rem">
               <Button
                 size="md"
                 colorScheme="blue"
                 leftIcon={<CopyIcon />}
-                onClick={async () => await copyToClipboard(shortUrl.short)}
+                onClick={async () => await copyToClipboard(shortUrl)}
               >
                 Copy
               </Button>
@@ -99,15 +104,15 @@ function Short() {
             <Tbody>
               <Tr>
                 <Td>Original URL</Td>
-                <ScrollableTd isNumeric>{shortUrl.url}</ScrollableTd>
+                <ScrollableTd isNumeric>{row.url}</ScrollableTd>
               </Tr>
               <Tr>
                 <Td>Total Clicks</Td>
-                <Td isNumeric>{shortUrl.clicks}</Td>
+                <Td isNumeric>{row.clicks}</Td>
               </Tr>
               <Tr>
                 <Td>Date Shortened</Td>
-                <ScrollableTd isNumeric>{shortUrl.created_at}</ScrollableTd>
+                <ScrollableTd isNumeric>{row.created_at}</ScrollableTd>
               </Tr>
             </Tbody>
           </Table>
