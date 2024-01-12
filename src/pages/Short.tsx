@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Input,
@@ -13,31 +13,20 @@ import {
   Tr,
   Td,
   Tbody,
+  Spinner,
+  FormControl,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 
 import { CopyIcon } from "@chakra-ui/icons";
 import { getUrl } from "../Api";
-
-interface ShortUrl {
-  url: string;
-  short: string;
-  clicks: number;
-  created_at: string;
-}
-
-const ScrollableTd = (props) => (
-  <Td
-    maxW="20rem" // Set maximum width
-    overflowX="auto" // Enable horizontal scrolling
-    {...props}
-  />
-);
 
 async function copyToClipboard(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
   } catch (err) {
     console.error("Failed to copy: ", err);
+    throw err;
   }
 }
 
@@ -54,6 +43,7 @@ function Short() {
   );
 
   const [isLoading, setIsLoading] = useState(!cachedRow);
+  const [error, setError] = useState("");
 
   const searchParams = new URLSearchParams(location.search);
   const shortcode = searchParams.get("s") ?? row.short;
@@ -69,24 +59,41 @@ function Short() {
     const fetchData = async (shortcode: string) => {
       const url = await getUrl(shortcode);
       setRow(url);
+      setIsLoading(false);
     };
 
     if (shortcode) {
       fetchData(shortcode);
+      setTimeout(() => {
+        if (isLoading) {
+          setError("Request timed out");
+          setIsLoading(false);
+        }
+      }, 3000);
     }
-    setIsLoading(false);
   }, [isLoading, row, shortcode]);
+
+  if (isLoading) {
+    return (
+      <Center>
+        <Spinner size="xl" />
+      </Center>
+    );
+  }
 
   return (
     <Center>
       <VStack>
         <Card m={7}>
           <InputGroup size="md">
-            <Input
-              pr="12rem"
-              placeholder="Your short url here"
-              value={shortUrl}
-            />
+            <FormControl>
+              <Input
+                pr="12rem"
+                placeholder="Your short url here"
+                value={shortUrl}
+              />
+              <FormErrorMessage paddingX=".3rem">{error}</FormErrorMessage>
+            </FormControl>
             <InputRightElement width="6rem">
               <Button
                 size="md"
@@ -104,7 +111,13 @@ function Short() {
             <Tbody>
               <Tr>
                 <Td>Original URL</Td>
-                <ScrollableTd isNumeric>{row.url}</ScrollableTd>
+                <Td
+                  maxW="20rem" // Set maximum width
+                  overflowX="auto" // Enable horizontal scrolling
+                  isNumeric
+                >
+                  {row.url}
+                </Td>
               </Tr>
               <Tr>
                 <Td>Total Clicks</Td>
@@ -112,7 +125,13 @@ function Short() {
               </Tr>
               <Tr>
                 <Td>Date Shortened</Td>
-                <ScrollableTd isNumeric>{row.created_at}</ScrollableTd>
+                <Td
+                  maxW="20rem" // Set maximum width
+                  overflowX="auto" // Enable horizontal scrolling
+                  isNumeric
+                >
+                  {row.created_at}
+                </Td>
               </Tr>
             </Tbody>
           </Table>

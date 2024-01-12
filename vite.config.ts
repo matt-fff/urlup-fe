@@ -4,6 +4,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const API_REDIRECT = {
+  target: "https://api.urlup.org/",
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/app\//, ""),
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -12,21 +18,9 @@ export default defineConfig({
       usePolling: true,
     },
     proxy: {
-      "/app/create": {
-        target: "https://api.urlup.org/",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/app\//, ""),
-      },
-      "/app/get": {
-        target: "https://api.urlup.org/",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/app\//, ""),
-      },
-      "/app/redirect": {
-        target: "https://api.urlup.org/",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/app\//, ""),
-      },
+      "/app/create": API_REDIRECT,
+      "/app/get": API_REDIRECT,
+      "/app/redirect": API_REDIRECT,
     },
   },
 });
