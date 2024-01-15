@@ -45,7 +45,7 @@ export async function getUrl(shortcode: string): Promise<ShortUrl> {
 
 export async function redirect(shortcode: string): Promise<string | null> {
   const response = await fetch("/app/redirect", {
-    method: "POST",
+    method: "GET",
     headers: baseHeaders,
     body: JSON.stringify({ shortcode }),
   });

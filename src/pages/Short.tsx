@@ -31,6 +31,7 @@ async function copyToClipboard(text: string): Promise<void> {
 }
 
 function Short() {
+  const host = import.meta.env.VITE_REDIRECT_HOST;
   const location = useLocation();
   const cachedRow = location?.state?.cachedRow;
   const [row, setRow] = useState(
@@ -39,7 +40,7 @@ function Short() {
       clicks: 0,
       short: "",
       date: "",
-    }
+    },
   );
 
   const [isLoading, setIsLoading] = useState(!cachedRow);
@@ -47,9 +48,6 @@ function Short() {
 
   const searchParams = new URLSearchParams(location.search);
   const shortcode = searchParams.get("s") ?? row.short;
-
-  const host = window.location.host;
-  const shortUrl = `${host}/${row.short}`;
 
   useEffect(() => {
     if (!isLoading) {
@@ -90,7 +88,8 @@ function Short() {
               <Input
                 pr="12rem"
                 placeholder="Your short url here"
-                value={shortUrl}
+                value={`${host}/${row.short}`}
+                readOnly
               />
               <FormErrorMessage paddingX=".3rem">{error}</FormErrorMessage>
             </FormControl>
@@ -99,7 +98,9 @@ function Short() {
                 size="md"
                 colorScheme="blue"
                 leftIcon={<CopyIcon />}
-                onClick={async () => await copyToClipboard(shortUrl)}
+                onClick={async () =>
+                  await copyToClipboard(`${host}/${row.short}`)
+                }
               >
                 Copy
               </Button>
