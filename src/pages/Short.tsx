@@ -15,7 +15,10 @@ import {
   Tbody,
   Spinner,
   FormControl,
-  FormErrorMessage,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 
 import { CopyIcon } from "@chakra-ui/icons";
@@ -40,36 +43,55 @@ function Short() {
       clicks: 0,
       short: "",
       date: "",
-    },
+    }
   );
 
-  const [isLoading, setIsLoading] = useState(!cachedRow);
+  const preloaded = !!cachedRow;
+
+  const [isLoading, setIsLoading] = useState(!preloaded);
   const [error, setError] = useState("");
+  const [errorDescr, setErrorDescr] = useState("");
 
   const searchParams = new URLSearchParams(location.search);
-  const shortcode = searchParams.get("s") ?? row.short;
+  const shortcode = searchParams.get("s") ?? "";
 
   useEffect(() => {
-    if (!isLoading) {
+    if (preloaded) {
+      setIsLoading(false);
       return;
     }
 
-    const fetchData = async (shortcode: string) => {
+    if (!shortcode) {
+      setError("Cannot find the link.");
+      setErrorDescr("No shortcode provided");
+      setIsLoading(false);
+    }
+
+    const fetchData = async () => {
+      const timeoutId = setTimeout(() => {
+        setError("Request timed out");
+        setErrorDescr("Refresh the page to retry.");
+        setIsLoading(false);
+      }, 3000);
+
       const url = await getUrl(shortcode);
       setRow(url);
+      clearTimeout(timeoutId);
       setIsLoading(false);
     };
 
-    if (shortcode) {
-      fetchData(shortcode);
-      setTimeout(() => {
-        if (isLoading) {
-          setError("Request timed out");
-          setIsLoading(false);
-        }
-      }, 3000);
-    }
-  }, [isLoading, row, shortcode]);
+    fetchData();
+  }, [preloaded, shortcode]);
+
+  if (error) {
+    return (
+      <Alert status="error">
+        <AlertIcon />
+        <AlertTitle>{error}</AlertTitle>
+        <AlertDescription>{errorDescr}</AlertDescription>
+      </Alert>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -91,7 +113,6 @@ function Short() {
                 value={`${host}/${row.short}`}
                 readOnly
               />
-              <FormErrorMessage paddingX=".3rem">{error}</FormErrorMessage>
             </FormControl>
             <InputRightElement width="6rem">
               <Button

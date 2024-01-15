@@ -41,17 +41,19 @@ function Home() {
             onSubmit={async (values, actions) => {
               actions.setSubmitting(true);
               try {
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                   actions.setErrors({ url: "Request timed out" });
                   actions.setSubmitting(false);
                 }, 3000);
 
                 const response = await createUrl(values.url);
+                clearTimeout(timeoutId);
+
                 const queryParams = new URLSearchParams({
                   s: response.short,
                 }).toString();
                 navigate(`/app/short?${queryParams}`, {
-                  state: { shortUrl: response },
+                  state: { cachedRow: response },
                 });
               } catch (error) {
                 if (error instanceof Error)
