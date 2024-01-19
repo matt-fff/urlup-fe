@@ -1,7 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  Input,
   Center,
   Card,
   InputGroup,
@@ -11,9 +9,10 @@ import {
   FormControl,
   FormErrorMessage,
 } from "@chakra-ui/react";
-import { Formik, Field, Form } from "formik";
+import { Formik, Field, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 
+import Input from "../components/Input";
 import { LinkIcon } from "@chakra-ui/icons";
 import { createUrl } from "../Api";
 
@@ -23,6 +22,10 @@ const CreateSchema = Yup.object().shape({
     .url("Must be a valid URL") // TODO too restrictive
     .required("Required"),
 });
+
+type Values = {
+  url: string;
+};
 
 function Home() {
   const navigate = useNavigate();
@@ -64,32 +67,28 @@ function Home() {
               }
             }}
           >
-            {({ isSubmitting }) => (
-              <Form>
-                <InputGroup size="md">
-                  <Field name="url">
-                    {({ field, form }) => (
-                      <FormControl
-                        isInvalid={form.errors.url && form.touched.url}
-                      >
-                        <Input
-                          pr="12rem"
-                          placeholder="Your URL here..."
-                          disabled={isSubmitting}
-                          {...field}
-                        />
-                        <FormErrorMessage paddingX=".3rem">
-                          {form.errors.url}
-                        </FormErrorMessage>
-                      </FormControl>
-                    )}
-                  </Field>
+            {(props: FormikProps<Values>) => (
+              <Form onSubmit={props.handleSubmit}>
+                <InputGroup size="md" width="30rem">
+                  <FormControl
+                    isInvalid={!!(props.errors.url && props.touched.url)}
+                  >
+                    <Input
+                      pr="6rem"
+                      name="url"
+                      placeholder="Your URL here..."
+                      disabled={props.isSubmitting}
+                    />
+                    <FormErrorMessage paddingX=".3rem">
+                      {props.errors.url}
+                    </FormErrorMessage>
+                  </FormControl>
                   <InputRightElement width="6rem">
                     <Button
                       type="submit"
                       size="md"
                       colorScheme="blue"
-                      isLoading={isSubmitting}
+                      isLoading={props.isSubmitting}
                       leftIcon={<LinkIcon />}
                     >
                       Shorten
