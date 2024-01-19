@@ -148,7 +148,9 @@ function Short() {
               <Heading size="md" color="blue.300">
                 Original URL
               </Heading>
-              <Text>{row.url}</Text>
+              <Text>
+                <a href={row.url}>{row.url}</a>
+              </Text>
             </Stack>
           </CardBody>
           <Divider />

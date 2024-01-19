@@ -1,11 +1,13 @@
+import { lazy } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { VStack } from "@chakra-ui/react";
 
-import "./App.css";
-import Home from "./pages/Home";
-import Short from "./pages/Short";
 import Header from "./Header";
-import NotFound from "./pages/NotFound";
+import "./App.css";
+
+const Home = lazy(() => import("./pages/Home"));
+const Short = lazy(() => import("./pages/Short"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function App() {
   return (
