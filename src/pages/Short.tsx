@@ -3,22 +3,26 @@ import { useLocation } from "react-router-dom";
 import {
   Input,
   Center,
-  Card,
   InputGroup,
   InputRightElement,
   Button,
   VStack,
-  TableContainer,
-  Table,
-  Tr,
-  Td,
-  Tbody,
   Spinner,
   FormControl,
   Alert,
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Stat,
+  StatLabel,
+  StatNumber,
+  Card,
+  CardBody,
+  CardFooter,
+  Divider,
+  Stack,
+  Heading,
+  Text,
 } from "@chakra-ui/react";
 
 import { CopyIcon } from "@chakra-ui/icons";
@@ -33,6 +37,16 @@ async function copyToClipboard(text: string): Promise<void> {
   }
 }
 
+function formatDate(dateString: string) {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  };
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", options);
+}
+
 function Short() {
   const host = import.meta.env.VITE_REDIRECT_HOST;
   const location = useLocation();
@@ -43,7 +57,7 @@ function Short() {
       clicks: 0,
       short: "",
       date: "",
-    }
+    },
   );
 
   const preloaded = !!cachedRow;
@@ -128,36 +142,27 @@ function Short() {
             </InputRightElement>
           </InputGroup>
         </Card>
-        <TableContainer>
-          <Table variant="simple">
-            <Tbody>
-              <Tr>
-                <Td>Original URL</Td>
-                <Td
-                  maxW="20rem" // Set maximum width
-                  overflowX="auto" // Enable horizontal scrolling
-                  isNumeric
-                >
-                  {row.url}
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>Total Clicks</Td>
-                <Td isNumeric>{row.clicks}</Td>
-              </Tr>
-              <Tr>
-                <Td>Date Shortened</Td>
-                <Td
-                  maxW="20rem" // Set maximum width
-                  overflowX="auto" // Enable horizontal scrolling
-                  isNumeric
-                >
-                  {row.created_at}
-                </Td>
-              </Tr>
-            </Tbody>
-          </Table>
-        </TableContainer>
+        <Card maxW="sm">
+          <CardBody>
+            <Stack spacing="3">
+              <Heading size="md" color="blue.300">
+                Original URL
+              </Heading>
+              <Text>{row.url}</Text>
+            </Stack>
+          </CardBody>
+          <Divider />
+          <CardFooter>
+            <Stat>
+              <StatLabel fontWeight="bold">Total Clicks</StatLabel>
+              <StatNumber>{row.clicks}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel fontWeight="bold">Date Created</StatLabel>
+              <StatLabel>{formatDate(row.created_at)}</StatLabel>
+            </Stat>
+          </CardFooter>
+        </Card>
       </VStack>
     </Center>
   );

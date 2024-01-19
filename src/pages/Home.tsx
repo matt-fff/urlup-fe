@@ -9,7 +9,7 @@ import {
   FormControl,
   FormErrorMessage,
 } from "@chakra-ui/react";
-import { Formik, Field, Form, FormikProps } from "formik";
+import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 
 import Input from "../components/Input";
