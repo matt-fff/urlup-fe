@@ -17,7 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/app/short" element={<Short />} />
-          <Route path="/app/404" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </VStack>
     </Router>
