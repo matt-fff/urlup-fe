@@ -4,10 +4,9 @@ import pulumi_synced_folder as synced_folder
 
 
 def stack(config: pulumi.Config):
-    path = config.get("path") or "./www"
+    path = config.get("path") or "../dist"
     index_document = config.get("indexDocument") or "index.html"
-    error_document = config.get("errorDocument") or "error.html"
-    cert_arn = config.get("certificateArn")
+    cert_arn = config.get_secret("certificateArn")
     host = config.get("host")
 
     if not host:
@@ -20,7 +19,7 @@ def stack(config: pulumi.Config):
         "bucket",
         website=aws.s3.BucketWebsiteArgs(
             index_document=index_document,
-            error_document=error_document,
+            # error_document=error_document,
         ),
     )
 
@@ -52,6 +51,42 @@ def stack(config: pulumi.Config):
         ])
     )
 
+    us_east_1 = aws.Provider(
+        "us-east-1",
+        aws.ProviderArgs(
+            region="us-east-1",
+        ),
+    )
+
+    # create the certificate
+    cert = aws.acm.Certificate(
+        "frontendCert",
+        domain_name=host,
+        validation_method="DNS",
+        opts=pulumi.ResourceOptions(provider=us_east_1),
+    )
+    validation_option = cert.domain_validation_options[0]
+
+    zone = aws.route53.get_zone(name=host)
+    # Set up the DNS records for validation
+    validation_record = aws.route53.Record(
+        "certValidationRecord",
+        # Use the zone ID for the domain's hosted zone in Route 53
+        zone_id=zone.id,
+        name=validation_option["resource_record_name"],
+        type=validation_option["resource_record_type"],
+        records=[validation_option["resource_record_value"]],
+        ttl=60,
+    )
+
+    aws.acm.CertificateValidation(
+        "certValidation",
+        certificate_arn=cert.arn,
+        validation_record_fqdns=[validation_record.fqdn],
+        opts=pulumi.ResourceOptions(provider=us_east_1),
+    )
+
+
     # Create a CloudFront CDN to distribute and cache the website.
     cdn = aws.cloudfront.Distribution(
         "cdn",
@@ -67,7 +102,17 @@ def stack(config: pulumi.Config):
                     https_port=443,
                     origin_ssl_protocols=["TLSv1.2"],
                 ),
-            )
+            ),
+            # aws.cloudfront.DistributionOriginArgs(
+            #     origin_id=host,
+            #     domain_name=host,
+            #     custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
+            #         origin_protocol_policy="http-only",
+            #         http_port=80,
+            #         https_port=443,
+            #         origin_ssl_protocols=["TLSv1.2"],
+            #     ),
+            # )
         ],
         default_cache_behavior=aws.cloudfront.DistributionDefaultCacheBehaviorArgs(
             target_origin_id=bucket.arn,
@@ -76,6 +121,10 @@ def stack(config: pulumi.Config):
                 "GET",
                 "HEAD",
                 "OPTIONS",
+                "POST",
+                "DELETE",
+                "PUT",
+                "PATCH",
             ],
             cached_methods=[
                 "GET",
@@ -90,15 +139,16 @@ def stack(config: pulumi.Config):
                 cookies=aws.cloudfront.DistributionDefaultCacheBehaviorForwardedValuesCookiesArgs(
                     forward="all",
                 ),
+                headers=["Origin"],
             ),
         ),
         price_class="PriceClass_100",
         custom_error_responses=[
-            aws.cloudfront.DistributionCustomErrorResponseArgs(
-                error_code=404,
-                response_code=404,
-                response_page_path=f"/{error_document}",
-            )
+            # aws.cloudfront.DistributionCustomErrorResponseArgs(
+            #     error_code=404,
+            #     response_code=404,
+            #     response_page_path=f"/{error_document}",
+            # )
         ],
         restrictions=aws.cloudfront.DistributionRestrictionsArgs(
             geo_restriction=aws.cloudfront.DistributionRestrictionsGeoRestrictionArgs(
@@ -106,8 +156,26 @@ def stack(config: pulumi.Config):
             ),
         ),
         viewer_certificate=aws.cloudfront.DistributionViewerCertificateArgs(
-            acm_certificate_arn=cert_arn,
+            cloudfront_default_certificate=False,
+            acm_certificate_arn=cert.arn,
             ssl_support_method="sni-only",
+        ),
+    )
+
+    # Create a DNS A record to point to the CDN.
+    aws.route53.Record("bucketRedirect",
+        zone_id=zone.zone_id,
+        name="",
+        type="A",
+        aliases=[
+            aws.route53.RecordAliasArgs(
+                name=cdn.domain_name,
+                zone_id=cdn.hosted_zone_id,
+                evaluate_target_health=True,
+            )
+        ],
+        opts=pulumi.ResourceOptions(
+            depends_on=cert,
         ),
     )
 

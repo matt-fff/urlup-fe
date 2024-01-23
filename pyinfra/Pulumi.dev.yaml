@@ -1,7 +1,0 @@
-config:
-  aws:region: us-west-2
-  urlup-fe:errorDocument: error.html
-  urlup-fe:indexDocument: index.html
-  urlup-fe:host: urlup.org
-  urlup-fe:path: ./www
-  urlup-fe:certificateArn: arn:aws:acm:us-west-2:575280811814:certificate/0396714d-00d2-45e5-8221-9302553c22ad

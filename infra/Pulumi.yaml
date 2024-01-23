@@ -1,3 +1,6 @@
 name: urlup-fe
-runtime: nodejs
-description: A TypeScript program to deploy a static website on AWS
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: A Python program to deploy a static website on AWS
