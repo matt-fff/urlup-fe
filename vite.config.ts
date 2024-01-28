@@ -8,7 +8,7 @@ dotenv.config();
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const API_URI = env.VITE_API_URI;
-  if (!API_URI.trim()) throw Error("API_URI is required");
+  if (!API_URI || !API_URI.trim()) throw Error("API_URI is required");
 
   const API_REDIRECT = {
     target: API_URI,
