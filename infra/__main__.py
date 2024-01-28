@@ -1,7 +1,20 @@
 import os
+import re
+from typing import Optional
 import pulumi
 import pulumi_aws as aws
 import pulumi_synced_folder as synced_folder
+
+
+def get_pr_number() -> Optional[str]:
+    ci_project = os.environ.get("PULUMI_CI_PROJECT")
+    if not ci_project:
+        return None
+
+    ci_stack = os.environ.get("PULUMI_CI_STACK", "")
+    pattern = rf"^pr-\S+-{ci_project}-([0-9]+)$"
+    match = re.match(pattern, ci_stack)
+    return match.group(1) if match else None
 
 
 def get_host(config: pulumi.Config) -> str:
@@ -11,7 +24,7 @@ def get_host(config: pulumi.Config) -> str:
 
     pr_num = os.environ.get("PULUMI_PR_NUMBER")
     if pr_num:
-        return f"{pr_num}.pr.{host}"
+        return f"{pr_num}.{host}"
 
     return host
 
@@ -19,9 +32,6 @@ def get_host(config: pulumi.Config) -> str:
 def stack(config: pulumi.Config):
     path = config.get("path") or "../dist"
     index_document = config.get("indexDocument") or "index.html"
-    cert_arn = config.get_secret("certificateArn")
-    if not cert_arn:
-        raise ValueError("cert_arn is a required configuration field")
 
     # Create an S3 bucket and configure it as a website.
     bucket = aws.s3.Bucket(
@@ -198,5 +208,5 @@ def stack(config: pulumi.Config):
 
 
 # Import the program's configuration settings.
-config = pulumi.Config()
-stack(config)
+# config = pulumi.Config()
+# stack(config)
