@@ -7,6 +7,7 @@ else
   ESCENV="codefold/urlup-fe-dev"
 fi
 
+pulumi login
 pulumi env open $ESCENV
 pulumi env run $ESCENV npm run build
 
