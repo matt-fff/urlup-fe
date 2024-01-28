@@ -1,16 +1,25 @@
+import os
 import pulumi
 import pulumi_aws as aws
 import pulumi_synced_folder as synced_folder
+
+
+def get_host(config: pulumi.Config) -> str:
+    host = config.get("host")
+    if not host:
+        raise ValueError("host is a required configuration field")
+
+    pr_num = os.environ.get("PULUMI_PR_NUMBER")
+    if pr_num:
+        return f"{pr_num}.pr.{host}"
+
+    return host
 
 
 def stack(config: pulumi.Config):
     path = config.get("path") or "../dist"
     index_document = config.get("indexDocument") or "index.html"
     cert_arn = config.get_secret("certificateArn")
-    host = config.get("host")
-
-    if not host:
-        raise ValueError("host is a required configuration field")
     if not cert_arn:
         raise ValueError("cert_arn is a required configuration field")
 
@@ -29,7 +38,7 @@ def stack(config: pulumi.Config):
         bucket=bucket.bucket,
         rule=aws.s3.BucketOwnershipControlsRuleArgs(
             object_ownership="ObjectWriter",
-        )
+        ),
     )
 
     # Configure public ACL block on the new bucket
@@ -45,10 +54,9 @@ def stack(config: pulumi.Config):
         acl="public-read",
         bucket_name=bucket.bucket,
         path=path,
-        opts=pulumi.ResourceOptions(depends_on=[
-            ownership_controls,
-            public_access_block
-        ])
+        opts=pulumi.ResourceOptions(
+            depends_on=[ownership_controls, public_access_block]
+        ),
     )
 
     us_east_1 = aws.Provider(
@@ -58,6 +66,7 @@ def stack(config: pulumi.Config):
         ),
     )
 
+    host = get_host(config)
     # create the certificate
     cert = aws.acm.Certificate(
         "frontendCert",
@@ -85,7 +94,6 @@ def stack(config: pulumi.Config):
         validation_record_fqdns=[validation_record.fqdn],
         opts=pulumi.ResourceOptions(provider=us_east_1),
     )
-
 
     # Create a CloudFront CDN to distribute and cache the website.
     cdn = aws.cloudfront.Distribution(
@@ -163,7 +171,8 @@ def stack(config: pulumi.Config):
     )
 
     # Create a DNS A record to point to the CDN.
-    aws.route53.Record("bucketRedirect",
+    aws.route53.Record(
+        "bucketRedirect",
         zone_id=zone.zone_id,
         name="",
         type="A",
@@ -180,11 +189,14 @@ def stack(config: pulumi.Config):
     )
 
     # Export the URLs and hostnames of the bucket and distribution.
-    pulumi.export("originURL", pulumi.Output.concat("http://", bucket.website_endpoint))
+    pulumi.export(
+        "originURL", pulumi.Output.concat("http://", bucket.website_endpoint)
+    )
     pulumi.export("originHostname", bucket.website_endpoint)
     pulumi.export("cdnURL", pulumi.Output.concat("https://", cdn.domain_name))
     pulumi.export("cdnHostname", cdn.domain_name)
 
+
 # Import the program's configuration settings.
 config = pulumi.Config()
-stack(config);
+stack(config)
