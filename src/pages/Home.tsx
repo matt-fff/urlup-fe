@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, startTransition } from "react-router-dom";
 import {
   Center,
   Card,
@@ -19,7 +19,7 @@ import { createUrl } from "../Api";
 const CreateSchema = Yup.object().shape({
   url: Yup.string()
     .min(3, "Too short")
-    .url("Must be a valid URL") // TODO too restrictive
+    .url("Must be a valid URL - like http://example.com") // TODO too restrictive
     .required("Required"),
 });
 
@@ -50,6 +50,7 @@ function Home() {
                 }, 3000);
 
                 const response = await createUrl(values.url);
+
                 clearTimeout(timeoutId);
 
                 const queryParams = new URLSearchParams({

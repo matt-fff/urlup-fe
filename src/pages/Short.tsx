@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Input,
@@ -89,9 +89,11 @@ function Short() {
       }, 3000);
 
       const url = await getUrl(shortcode);
-      setRow(url);
-      clearTimeout(timeoutId);
-      setIsLoading(false);
+      startTransition(() => {
+        clearTimeout(timeoutId);
+        setRow(url);
+        setIsLoading(false);
+      });
     };
 
     fetchData();
