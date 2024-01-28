@@ -19,7 +19,7 @@ def stack(config: pulumi.Config):
         "bucket",
         website=aws.s3.BucketWebsiteArgs(
             index_document=index_document,
-            # error_document=error_document,
+            error_document=index_document,
         ),
     )
 

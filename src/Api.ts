@@ -5,10 +5,11 @@ interface ShortUrl {
   created_at: string;
 }
 
-const apiKey = import.meta.env.VITE_API_KEY ?? "";
-const baseHeaders = {
+const API_URI = import.meta.env.DEV ? "/app" : import.meta.env.VITE_API_URI;
+const API_KEY = import.meta.env.VITE_API_KEY ?? "";
+const HEADERS = {
   "Content-Type": "application/json",
-  "x-api-key": apiKey,
+  "x-api-key": API_KEY,
 };
 
 export async function createUrl(url: string): Promise<ShortUrl> {
@@ -16,9 +17,9 @@ export async function createUrl(url: string): Promise<ShortUrl> {
     throw new Error("URL cannot be blank");
   }
 
-  const response = await fetch("/app/create", {
+  const response = await fetch(`${API_URI}/create`, {
     method: "POST",
-    headers: baseHeaders,
+    headers: HEADERS,
     body: JSON.stringify({ url }),
   });
 
@@ -30,9 +31,9 @@ export async function createUrl(url: string): Promise<ShortUrl> {
 }
 
 export async function getUrl(shortcode: string): Promise<ShortUrl> {
-  const response = await fetch("/app/get", {
+  const response = await fetch(`${API_URI}/get`, {
     method: "POST",
-    headers: baseHeaders,
+    headers: HEADERS,
     body: JSON.stringify({ shortcode }),
   });
 
@@ -44,9 +45,9 @@ export async function getUrl(shortcode: string): Promise<ShortUrl> {
 }
 
 export async function redirect(shortcode: string): Promise<string | null> {
-  const response = await fetch("/app/redirect", {
+  const response = await fetch(`${API_URI}/redirect`, {
     method: "GET",
-    headers: baseHeaders,
+    headers: HEADERS,
     body: JSON.stringify({ shortcode }),
   });
 
