@@ -59,7 +59,7 @@ def stack(config: pulumi.Config):
     )
 
     # Use a synced folder to manage the files of the website.
-    bucket_folder = synced_folder.S3BucketFolder(
+    synced_folder.S3BucketFolder(
         "bucket-folder",
         acl="public-read",
         bucket_name=bucket.bucket,
@@ -121,16 +121,6 @@ def stack(config: pulumi.Config):
                     origin_ssl_protocols=["TLSv1.2"],
                 ),
             ),
-            # aws.cloudfront.DistributionOriginArgs(
-            #     origin_id=host,
-            #     domain_name=host,
-            #     custom_origin_config=aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
-            #         origin_protocol_policy="http-only",
-            #         http_port=80,
-            #         https_port=443,
-            #         origin_ssl_protocols=["TLSv1.2"],
-            #     ),
-            # )
         ],
         default_cache_behavior=aws.cloudfront.DistributionDefaultCacheBehaviorArgs(
             target_origin_id=bucket.arn,
@@ -161,13 +151,6 @@ def stack(config: pulumi.Config):
             ),
         ),
         price_class="PriceClass_100",
-        custom_error_responses=[
-            # aws.cloudfront.DistributionCustomErrorResponseArgs(
-            #     error_code=404,
-            #     response_code=404,
-            #     response_page_path=f"/{error_document}",
-            # )
-        ],
         restrictions=aws.cloudfront.DistributionRestrictionsArgs(
             geo_restriction=aws.cloudfront.DistributionRestrictionsGeoRestrictionArgs(
                 restriction_type="none",
@@ -208,5 +191,5 @@ def stack(config: pulumi.Config):
 
 
 # Import the program's configuration settings.
-# config = pulumi.Config()
-# stack(config)
+config = pulumi.Config()
+stack(config)
