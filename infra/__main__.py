@@ -1,6 +1,7 @@
 import os
 import re
 from typing import Optional
+
 import pulumi
 import pulumi_aws as aws
 import pulumi_synced_folder as synced_folder
