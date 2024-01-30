@@ -65,6 +65,13 @@ def stack(config: pulumi.Config):
     )
 
     host = get_host(config)
+
+    try:
+        zone = aws.route53.get_zone(name=host)
+    except Exception:
+        # If the zone does not exist, create a new one.
+        zone = aws.route53.Zone("frontendZone", name=host)
+
     # create the certificate
     cert = aws.acm.Certificate(
         "frontendCert",
@@ -74,7 +81,6 @@ def stack(config: pulumi.Config):
     )
     validation_option = cert.domain_validation_options[0]
 
-    zone = aws.route53.get_zone(name=host)
     # Set up the DNS records for validation
     validation_record = aws.route53.Record(
         "certValidationRecord",
