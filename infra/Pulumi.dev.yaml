@@ -1,7 +1,2 @@
-config:
-  aws:region: us-west-2
-  urlup-fe:certificateArn:
-    secure: AAABAGqMjUgkM2BlnC+gxAgjiiIULE0QVOnen/mL9eUA8Gqmo9hRqlWEVPzjw+ZDwq0burGHo2P0Wtw47WIrbbYrYCY/NRQgbEDzqZ02cpTy3GcGEZn8lejOZ6eqiZ2d6/Llta50TBTsjIk4fmSFHX4Pyw==
-  urlup-fe:host: urlup.org
-  urlup-fe:indexDocument: index.html
-  urlup-fe:path: ../dist
+environment:
+  - urlup-fe-dev
