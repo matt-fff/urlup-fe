@@ -59,6 +59,7 @@ jobs:
           cd infra
           pulumi stack select --stack "${STACK}"
           pulumi preview
+
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       ESCENV: codefold/urlup-fe-pr
