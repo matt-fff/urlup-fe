@@ -1,21 +1,8 @@
 import os
-import re
-from typing import Optional
 
 import pulumi
 import pulumi_aws as aws
 import pulumi_synced_folder as synced_folder
-
-
-def get_pr_number() -> Optional[str]:
-    ci_project = os.environ.get("PULUMI_CI_PROJECT")
-    if not ci_project:
-        return None
-
-    ci_stack = os.environ.get("PULUMI_CI_STACK", "")
-    pattern = rf"^pr-\S+-{ci_project}-([0-9]+)$"
-    match = re.match(pattern, ci_stack)
-    return match.group(1) if match else None
 
 
 def get_host(config: pulumi.Config) -> str:
@@ -23,9 +10,9 @@ def get_host(config: pulumi.Config) -> str:
     if not host:
         raise ValueError("host is a required configuration field")
 
-    pr_num = os.environ.get("PULUMI_PR_NUMBER")
+    pr_num = os.environ.get("PR_NUM")
     if pr_num:
-        return f"{pr_num}.{host}"
+        return f"{pr_num}.pr.{host}"
 
     return host
 
