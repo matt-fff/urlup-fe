@@ -57,7 +57,7 @@ jobs:
           cd infra
           pulumi stack select -c \
             --stack "${STACK}"
-          pulumi preview --non-interactive --yes
+          pulumi preview --non-interactive
 
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
