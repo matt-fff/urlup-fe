@@ -1,13 +1,13 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Merge Checks
-run-name: PR Checks for ${{ github.ref_name }}
+name: Deploy Production
+run-name: Deploy ${{ github.ref_name }}
 
 on:
   push:
     branches:
-      - trunk-merge/**
+      - main
 
 permissions:
   contents: read
@@ -18,13 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     name: Pulumi Preview
     environment: pulumi
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20
           cache: npm
 
       - uses: actions/setup-python@v5
@@ -45,17 +48,18 @@ jobs:
       - name: AWS Authentication
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-session-name: GHA-Merge-Checks
+          role-session-name: gha-deploy
           role-to-assume: ${{ secrets.PULUMI_IAM_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Pulumi Preview
+      - name: Pulumi Deploy
         run: |
           cd infra
-          pulumi stack select --stack "${STACK}"
-          pulumi preview
+          pulumi stack select -c \
+            --stack "${STACK}"
+          pulumi up --non-interactive --yes
 
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      ESCENV: codefold/urlup-fe-pr
+      ESCENV: codefold/urlup-fe-dev
       STACK: codefold/urlup-fe/dev
