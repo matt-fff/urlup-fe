@@ -1,5 +1,4 @@
 import os
-import re
 from typing import Optional
 
 import pulumi
@@ -7,27 +6,15 @@ import pulumi_aws as aws
 import pulumi_synced_folder as synced_folder
 
 
-def get_pr_number() -> Optional[str]:
-    ci_project = os.environ.get("PULUMI_CI_PROJECT")
-    if not ci_project:
-        return None
-
-    ci_stack = os.environ.get("PULUMI_CI_STACK", "")
-    pattern = rf"^pr-\S+-{ci_project}-([0-9]+)$"
-    match = re.match(pattern, ci_stack)
-    return match.group(1) if match else None
+def get_pr_num() -> Optional[str]:
+    pr_num = os.environ.get("PR_NUM")
+    return pr_num or None
 
 
-def get_host(config: pulumi.Config) -> str:
-    host = config.get("host")
-    if not host:
-        raise ValueError("host is a required configuration field")
-
-    pr_num = os.environ.get("PULUMI_PR_NUMBER")
-    if pr_num:
-        return f"{pr_num}.{host}"
-
-    return host
+def get_frontend_host(config: pulumi.Config) -> str:
+    base = config.get("frontend_host")
+    pr_num = get_pr_num()
+    return f"pr-{pr_num}.{base}" if pr_num else base
 
 
 def stack(config: pulumi.Config):
@@ -76,41 +63,26 @@ def stack(config: pulumi.Config):
             region="us-east-1",
         ),
     )
+    zone_host = config.get("zone_host")
+    frontend_host = get_frontend_host(config)
 
-    host = get_host(config)
-    # create the certificate
-    cert = aws.acm.Certificate(
-        "frontendCert",
-        domain_name=host,
-        validation_method="DNS",
-        opts=pulumi.ResourceOptions(provider=us_east_1),
-    )
-    validation_option = cert.domain_validation_options[0]
+    if not frontend_host.endswith(zone_host):
+        raise ValueError("Frontend host doesn't match the zone host.")
 
-    zone = aws.route53.get_zone(name=host)
-    # Set up the DNS records for validation
-    validation_record = aws.route53.Record(
-        "certValidationRecord",
-        # Use the zone ID for the domain's hosted zone in Route 53
-        zone_id=zone.id,
-        name=validation_option["resource_record_name"],
-        type=validation_option["resource_record_type"],
-        records=[validation_option["resource_record_value"]],
-        ttl=60,
-    )
+    zone = aws.route53.get_zone(name=zone_host)
 
-    aws.acm.CertificateValidation(
-        "certValidation",
-        certificate_arn=cert.arn,
-        validation_record_fqdns=[validation_record.fqdn],
-        opts=pulumi.ResourceOptions(provider=us_east_1),
+    cert = aws.acm.get_certificate(
+        domain=config.get("cert_host"),
+        most_recent=True,
+        statuses=["ISSUED"],
+        opts=pulumi.InvokeOptions(provider=us_east_1),
     )
 
     # Create a CloudFront CDN to distribute and cache the website.
     cdn = aws.cloudfront.Distribution(
         "cdn",
         enabled=True,
-        aliases=[host],
+        aliases=[frontend_host],
         origins=[
             aws.cloudfront.DistributionOriginArgs(
                 origin_id=bucket.arn,
@@ -167,8 +139,8 @@ def stack(config: pulumi.Config):
     # Create a DNS A record to point to the CDN.
     aws.route53.Record(
         "bucketRedirect",
+        name=frontend_host[: -len(zone_host)].strip("."),
         zone_id=zone.zone_id,
-        name="",
         type="A",
         aliases=[
             aws.route53.RecordAliasArgs(
@@ -177,18 +149,14 @@ def stack(config: pulumi.Config):
                 evaluate_target_health=True,
             )
         ],
-        opts=pulumi.ResourceOptions(
-            depends_on=cert,
-        ),
     )
 
     # Export the URLs and hostnames of the bucket and distribution.
-    pulumi.export(
-        "originURL", pulumi.Output.concat("http://", bucket.website_endpoint)
-    )
+    pulumi.export("originURL", pulumi.Output.concat("http://", bucket.website_endpoint))
     pulumi.export("originHostname", bucket.website_endpoint)
     pulumi.export("cdnURL", pulumi.Output.concat("https://", cdn.domain_name))
     pulumi.export("cdnHostname", cdn.domain_name)
+    pulumi.export("aliasURL", pulumi.Output.concat("https://", frontend_host))
 
 
 # Import the program's configuration settings.
