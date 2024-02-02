@@ -5,6 +5,9 @@ name: Deploy Pull Request
 run-name: Deploy ${{ github.ref_name }}
 
 on:
+  push:
+    branches:
+      - trunk-merge/**
   pull_request:
     branches:
       - main
