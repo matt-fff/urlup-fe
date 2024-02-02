@@ -11,85 +11,10 @@ def get_pr_num() -> Optional[str]:
     return pr_num or None
 
 
-def get_base_domain(config: pulumi.Config) -> str:
-    host = config.get("host")
-    if not host:
-        raise ValueError("host is a required configuration field")
-
-    return host
-
-
 def get_frontend_host(config: pulumi.Config) -> str:
     base = config.get("frontend_host")
     pr_num = get_pr_num()
     return f"pr-{pr_num}.{base}" if pr_num else base
-
-
-def bootstrap_dns(config: pulumi.Config) -> tuple:
-    us_east_1 = aws.Provider(
-        "us-east-1",
-        aws.ProviderArgs(
-            region="us-east-1",
-        ),
-    )
-
-    zone_host = config.get("zone_host")
-    try:
-        zone = aws.route53.get_zone(name=zone_host)
-    except Exception:
-        # If the zone does not exist, create a new one.
-        zone = aws.route53.Zone(
-            "frontendZone",
-            name=zone_host,
-            opts=pulumi.ResourceOptions(provider=us_east_1),
-        )
-
-    frontend_host = get_frontend_host(config)
-    try:
-        cert = aws.acm.get_certificate(
-            domain=frontend_host,
-            statuses=["ISSUED"],
-            opts=pulumi.ResourceOptions(provider=us_east_1),
-        )
-    except Exception:
-        # create the certificate
-        cert = aws.acm.Certificate(
-            "frontendCert",
-            domain_name=frontend_host,
-            validation_method="DNS",
-            opts=pulumi.ResourceOptions(provider=us_east_1),
-        )
-
-    validation_option = cert.domain_validation_options[0]
-    try:
-        validation_record = aws.route53.get_record(
-            name=validation_option["resource_record_name"],
-            type=validation_option["resource_record_type"],
-            zone_id=zone.id,
-        )
-    except Exception:
-        # Set up the DNS records for validation
-        validation_record = aws.route53.Record(
-            "certValidationRecord",
-            # Use the zone ID for the domain's hosted zone in Route 53
-            zone_id=zone.id,
-            name=validation_option["resource_record_name"],
-            type=validation_option["resource_record_type"],
-            records=[validation_option["resource_record_value"]],
-            ttl=60,
-            opts=pulumi.ResourceOptions(provider=us_east_1),
-        )
-
-    aws.acm.CertificateValidation(
-        "certValidation",
-        certificate_arn=cert.arn,
-        validation_record_fqdns=[validation_record.fqdn],
-        opts=pulumi.ResourceOptions(
-            provider=us_east_1, depends_on=[cert, validation_record]
-        ),
-    )
-
-    return zone, cert
 
 
 def stack(config: pulumi.Config):
@@ -132,8 +57,26 @@ def stack(config: pulumi.Config):
         ),
     )
 
-    zone, cert = bootstrap_dns(config)
+    us_east_1 = aws.Provider(
+        "us-east-1",
+        aws.ProviderArgs(
+            region="us-east-1",
+        ),
+    )
+    zone_host = config.get("zone_host")
     frontend_host = get_frontend_host(config)
+
+    if not frontend_host.endswith(zone_host):
+        raise ValueError("Frontend host doesn't match the zone host.")
+
+    zone = aws.route53.get_zone(name=zone_host)
+
+    cert = aws.acm.get_certificate(
+        domain=config.get("cert_host"),
+        most_recent=True,
+        statuses=["ISSUED"],
+        opts=pulumi.InvokeOptions(provider=us_east_1),
+    )
 
     # Create a CloudFront CDN to distribute and cache the website.
     cdn = aws.cloudfront.Distribution(
@@ -196,7 +139,7 @@ def stack(config: pulumi.Config):
     # Create a DNS A record to point to the CDN.
     aws.route53.Record(
         "bucketRedirect",
-        name="bucketRedir",
+        name=frontend_host[: -len(zone_host)].strip("."),
         zone_id=zone.zone_id,
         type="A",
         aliases=[
@@ -206,9 +149,6 @@ def stack(config: pulumi.Config):
                 evaluate_target_health=True,
             )
         ],
-        opts=pulumi.ResourceOptions(
-            depends_on=cert,
-        ),
     )
 
     # Export the URLs and hostnames of the bucket and distribution.
@@ -218,6 +158,7 @@ def stack(config: pulumi.Config):
     pulumi.export("originHostname", bucket.website_endpoint)
     pulumi.export("cdnURL", pulumi.Output.concat("https://", cdn.domain_name))
     pulumi.export("cdnHostname", cdn.domain_name)
+    pulumi.export("aliasURL", pulumi.Output.concat("https://", frontend_host))
 
 
 # Import the program's configuration settings.
