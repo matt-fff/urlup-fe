@@ -138,7 +138,7 @@ def stack(config: pulumi.Config):
 
     # Create a DNS A record to point to the CDN.
     aws.route53.Record(
-        "bucketRedirect",
+        "bucket-redirect",
         name=frontend_host[: -len(zone_host)].strip("."),
         zone_id=zone.zone_id,
         type="A",
