@@ -10,17 +10,17 @@
 }
 
 .header h1 {
-  font-family: 'Tektur', sans-serif;
+  font-family: "Tektur", sans-serif;
   font-size: extralarge;
 }
-
 
 .logo {
   height: 8em;
   padding: 1.5em 0.5em;
 }
 
-.header:hover, .header:focus {
+.header:hover,
+.header:focus {
   color: inherit;
   transform: scale(1.02); /* Increase the size by 5% */
 }
