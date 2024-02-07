@@ -12,7 +12,7 @@ def get_pr_num() -> Optional[str]:
 
 
 def get_frontend_host(config: pulumi.Config) -> str:
-    base = config.get("frontend_host")
+    base = config.require("frontend_host")
     pr_num = get_pr_num()
     return f"pr-{pr_num}.{base}" if pr_num else base
 
@@ -63,7 +63,7 @@ def stack(config: pulumi.Config):
             region="us-east-1",
         ),
     )
-    zone_host = config.get("zone_host")
+    zone_host = config.require("zone_host")
     frontend_host = get_frontend_host(config)
 
     if not frontend_host.endswith(zone_host):
@@ -72,7 +72,7 @@ def stack(config: pulumi.Config):
     zone = aws.route53.get_zone(name=zone_host)
 
     cert = aws.acm.get_certificate(
-        domain=config.get("cert_host"),
+        domain=config.require("cert_host"),
         most_recent=True,
         statuses=["ISSUED"],
         opts=pulumi.InvokeOptions(provider=us_east_1),
