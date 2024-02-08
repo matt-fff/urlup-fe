@@ -12,6 +12,5 @@ permissions:
 
 jobs:
   deploy:
-    name: Pulumi Deploy
     uses: matt-fff/urlup-fe-infra/.github/workflows/deploy-prod.yml@main
     secrets: inherit

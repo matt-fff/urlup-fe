@@ -14,6 +14,5 @@ permissions:
 
 jobs:
   destroy:
-    name: Pulumi Destroy
     uses: matt-fff/urlup-fe-infra/.github/workflows/cleanup-pr.yml@main
     secrets: inherit
