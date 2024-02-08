@@ -42,4 +42,4 @@ actions:
 merge:
   required_statuses:
     - Trunk Check
-    - Pulumi Preview
+    - preview / Pulumi Preview
