@@ -17,3 +17,4 @@ jobs:
   preview:
     name: Pulumi Preview
     uses: matt-fff/urlup-fe-infra/.github/workflows/deploy-pr.yml@mw/reusable-workflow
+    secrets: inherit
