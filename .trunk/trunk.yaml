@@ -14,16 +14,11 @@ runtimes:
   enabled:
     - go@1.21.0
     - node@18.12.1
-    - python@3.10.8
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
     - taplo@0.8.1
     - actionlint@1.6.26
-    - bandit@1.7.7
-    - black@24.1.1
-    - isort@5.13.2
-    - ruff@0.2.1
     - shellcheck@0.9.0
     - shfmt@3.6.0
     - checkov@3.2.5
@@ -34,9 +29,9 @@ lint:
     - osv-scanner@1.6.2
     - oxipng@9.0.0
     - prettier@3.2.5
-    - trivy@0.49.0
-    - trufflehog@3.67.2
-    - yamllint@1.33.0
+    - trivy@0.49.1
+    - trufflehog@3.67.4
+    - yamllint@1.34.0
 actions:
   disabled:
     - trunk-check-pre-push
